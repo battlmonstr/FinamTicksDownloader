@@ -52,6 +52,7 @@ namespace FinamTicksDownloader
                 Console.WriteLine("Period with name " + args[1] + " not found");
                 return;
             }
+            period.HowMuchDaysToDownloadAtTime = 10;
 
             DateTime startDate = DateTime.Parse(args[2]);
             DateTime endDate = DateTime.Parse(args[3]);
@@ -70,7 +71,7 @@ namespace FinamTicksDownloader
 
             Console.WriteLine("Using ticker " + ticker);
 
-            string fileName = String.Format("{0}-{1}-from-{2:D4}-{3:D2}-{4:D2}-to-{5:D4}-{6:D2}-{7:D2}.txt",
+            string fileName = String.Format("SPFB.{0}-{1}_{2:D4}{3:D2}{4:D2}_{5:D4}{6:D2}{7:D2}.csv",
                 ticker.Name,
                 period.Name,
                 startDate.Year,
@@ -136,7 +137,16 @@ namespace FinamTicksDownloader
                 {
                     webClient.DownloadFile(url, tempFileName);
                     long size = new FileInfo(tempFileName).Length;
-                    Console.WriteLine("Downloaded " + size + " bytes");
+                    long mbSize = (size >> 20);
+                    Console.WriteLine("Downloaded " + mbSize + " Mbytes");
+
+                    if ((mbSize > 27) && (period.HowMuchDaysToDownloadAtTime > 0))
+                    {
+                        Console.WriteLine("Possibility of incomplete data. Will change to 1 day increment and retry.");
+                        period.HowMuchDaysToDownloadAtTime = 0;
+                        Thread.Sleep(5 * 1000);
+                        continue;
+                    }
 
                     if (size == 0)
                     {
